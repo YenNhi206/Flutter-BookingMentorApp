@@ -17,40 +17,21 @@ class Enrollment {
     this.certificateIssued = false,
   });
 
-  Enrollment copyWith({
-    double? progressPercent,
-    List<String>? completedLessonIds,
-    bool? certificateIssued,
-  }) {
+  factory Enrollment.fromJson(Map<String, dynamic> json) {
+    final courseIdField = json['courseId'];
+    final courseId = courseIdField is Map
+        ? (courseIdField['_id'] ?? courseIdField['id'] ?? '').toString()
+        : (courseIdField ?? '').toString();
+    final progressPercent = (json['progressPercent'] as num?)?.toDouble() ?? 0;
     return Enrollment(
-      id: id,
-      studentId: studentId,
+      id: (json['id'] ?? json['_id']).toString(),
+      studentId: (json['userId'] ?? '').toString(),
       courseId: courseId,
-      progressPercent: progressPercent ?? this.progressPercent,
-      completedLessonIds: completedLessonIds ?? this.completedLessonIds,
-      enrolledAt: enrolledAt,
-      certificateIssued: certificateIssued ?? this.certificateIssued,
+      progressPercent: progressPercent,
+      completedLessonIds:
+          (json['completedLessons'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      enrolledAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      certificateIssued: (json['isCompleted'] as bool? ?? false) || progressPercent >= 100,
     );
   }
-
-  Map<String, Object?> toMap() => {
-        'id': id,
-        'studentId': studentId,
-        'courseId': courseId,
-        'progressPercent': progressPercent,
-        'completedLessonIds': completedLessonIds.join('|'),
-        'enrolledAt': enrolledAt.toIso8601String(),
-        'certificateIssued': certificateIssued ? 1 : 0,
-      };
-
-  factory Enrollment.fromMap(Map<String, Object?> map) => Enrollment(
-        id: map['id'] as String,
-        studentId: map['studentId'] as String,
-        courseId: map['courseId'] as String,
-        progressPercent: (map['progressPercent'] as num).toDouble(),
-        completedLessonIds:
-            (map['completedLessonIds'] as String).split('|').where((e) => e.isNotEmpty).toList(),
-        enrolledAt: DateTime.parse(map['enrolledAt'] as String),
-        certificateIssued: (map['certificateIssued'] as int) == 1,
-      );
 }

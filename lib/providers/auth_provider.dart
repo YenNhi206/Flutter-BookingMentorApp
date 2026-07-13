@@ -11,7 +11,7 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({AuthRepository? repository}) : _repository = repository ?? AuthRepository();
 
   UserProfile? _currentUser;
-  AuthStatus _status = AuthStatus.unauthenticated;
+  AuthStatus _status = AuthStatus.unknown;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -20,6 +20,14 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+
+  /// Checks for a previously-persisted session on app startup.
+  Future<void> restoreSession() async {
+    final user = await _repository.tryRestoreSession();
+    _currentUser = user;
+    _status = user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+    notifyListeners();
+  }
 
   Future<bool> login({required String email, required String password}) async {
     _setLoading(true);
@@ -62,7 +70,8 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await _repository.logout();
     _currentUser = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();

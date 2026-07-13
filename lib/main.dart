@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'app.dart';
-import 'data/seed/seed_data.dart';
 import 'providers/admin_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
@@ -16,19 +15,36 @@ import 'services/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SeedData.seedIfEmpty();
   await LocalNotificationService.instance.init();
   runApp(const AppRoot());
 }
 
-class AppRoot extends StatelessWidget {
-  const AppRoot({super.key});
+class AppRoot extends StatefulWidget {
+  /// Overridable for tests, so they don't depend on the real
+  /// `flutter_secure_storage` platform channel being available.
+  final AuthProvider? authProvider;
+
+  const AppRoot({super.key, this.authProvider});
+
+  @override
+  State<AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<AppRoot> {
+  late final AuthProvider _authProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _authProvider = widget.authProvider ?? AuthProvider();
+    _authProvider.restoreSession();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: _authProvider),
         ChangeNotifierProvider(create: (_) => MentorProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),

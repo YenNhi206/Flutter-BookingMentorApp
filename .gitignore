@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Separate backend project kept alongside this app for convenience only -
+# not part of this repo.
+/backend/

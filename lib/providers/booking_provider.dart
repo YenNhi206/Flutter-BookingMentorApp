@@ -1,11 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../data/repositories/booking_repository.dart';
-import '../data/repositories/notification_repository.dart';
 import '../models/booking.dart';
 import '../models/mentor.dart';
-import '../models/notification_item.dart';
 import '../services/local_notification_service.dart';
 import '../services/pricing_service.dart';
 
@@ -18,14 +15,8 @@ class BookingConflictException implements Exception {
 
 class BookingProvider extends ChangeNotifier {
   final BookingRepository _repository;
-  final NotificationRepository _notificationRepository;
-  final _uuid = const Uuid();
 
-  BookingProvider({
-    BookingRepository? repository,
-    NotificationRepository? notificationRepository,
-  })  : _repository = repository ?? BookingRepository(),
-        _notificationRepository = notificationRepository ?? NotificationRepository();
+  BookingProvider({BookingRepository? repository}) : _repository = repository ?? BookingRepository();
 
   List<Booking> _myBookings = [];
   bool _isLoading = false;
@@ -41,8 +32,10 @@ class BookingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Creates a booking after validating there's no existing slot conflict
-  /// for the mentor, then raises an in-app + local push notification.
+  /// Creates a booking after a best-effort client-side slot-conflict check
+  /// (the server independently validates this too), then raises a local
+  /// push notification. Price/status/id come back from the server - it
+  /// computes price from the mentor's rate, this no longer does.
   Future<Booking> createBooking({
     required String studentId,
     required Mentor mentor,
@@ -61,40 +54,17 @@ class BookingProvider extends ChangeNotifier {
       throw BookingConflictException('This time slot is already booked. Please pick another.');
     }
 
-    final price = PricingService.calculateSessionPrice(
-      hourlyRate: mentor.hourlyRate,
-      durationMinutes: durationMinutes,
-    );
-
-    final booking = Booking(
-      id: _uuid.v4(),
-      studentId: studentId,
+    final booking = await _repository.create(
       mentorId: mentor.id,
-      mentorName: mentor.name,
       sessionDate: sessionDate,
       timeSlot: timeSlot,
       durationMinutes: durationMinutes,
-      price: price,
-      status: BookingStatus.confirmed,
       notes: notes,
-      createdAt: DateTime.now(),
     );
 
-    await _repository.create(booking);
-
-    final notification = NotificationItem(
-      id: _uuid.v4(),
-      userId: studentId,
+    await LocalNotificationService.instance.show(
       title: 'Booking confirmed',
       body: 'Your session with ${mentor.name} on ${_formatDate(sessionDate)} at $timeSlot is confirmed.',
-      type: NotificationType.booking,
-      relatedId: booking.id,
-      createdAt: DateTime.now(),
-    );
-    await _notificationRepository.create(notification);
-    await LocalNotificationService.instance.show(
-      title: notification.title,
-      body: notification.body,
     );
 
     await loadForStudent(studentId);

@@ -38,8 +38,13 @@ dependencies:
   # State management
   provider: ^6.1.2
 
+  # Networking (remote backend API)
+  http: ^1.2.2
+  flutter_secure_storage: ^9.2.2
+
   # Local database
   sqflite: ^2.4.1
+  sqflite_common_ffi_web: ^1.1.1
   path: ^1.9.0
 
   # Map (OpenStreetMap, no API key required)

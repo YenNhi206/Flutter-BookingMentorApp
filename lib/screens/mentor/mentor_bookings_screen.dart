@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_exception.dart';
 import '../../models/booking.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/mentor_dashboard_provider.dart';
@@ -22,15 +23,28 @@ class _MentorBookingsScreenState extends State<MentorBookingsScreen> {
     });
   }
 
+  Future<void> _runAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
   Color _statusColor(BookingStatus status) {
     switch (status) {
       case BookingStatus.confirmed:
+      case BookingStatus.inProgress:
         return Colors.green;
       case BookingStatus.pending:
+      case BookingStatus.rescheduled:
         return Colors.orange;
       case BookingStatus.completed:
         return Colors.blueGrey;
       case BookingStatus.cancelled:
+      case BookingStatus.noShow:
         return Colors.redAccent;
     }
   }
@@ -79,18 +93,35 @@ class _MentorBookingsScreenState extends State<MentorBookingsScreen> {
                               const SizedBox(height: 4),
                               Text('Note: ${booking.notes}', style: const TextStyle(color: Colors.black54)),
                             ],
+                            if (booking.status == BookingStatus.pending) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => _runAction(() => dashboard.cancelBooking(booking.id)),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () => _runAction(() => dashboard.confirmBooking(booking.id)),
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              ),
+                            ],
                             if (booking.status == BookingStatus.confirmed) ...[
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   TextButton(
-                                    onPressed: () => dashboard.cancelBooking(booking.id),
+                                    onPressed: () => _runAction(() => dashboard.cancelBooking(booking.id)),
                                     child: const Text('Cancel'),
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton(
-                                    onPressed: () => dashboard.markCompleted(booking.id),
+                                    onPressed: () => _runAction(() => dashboard.markCompleted(booking.id)),
                                     child: const Text('Mark completed'),
                                   ),
                                 ],

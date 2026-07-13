@@ -10,12 +10,15 @@ class AdminBookingsScreen extends StatelessWidget {
   Color _statusColor(BookingStatus status) {
     switch (status) {
       case BookingStatus.confirmed:
+      case BookingStatus.inProgress:
         return Colors.green;
       case BookingStatus.pending:
+      case BookingStatus.rescheduled:
         return Colors.orange;
       case BookingStatus.completed:
         return Colors.blueGrey;
       case BookingStatus.cancelled:
+      case BookingStatus.noShow:
         return Colors.redAccent;
     }
   }

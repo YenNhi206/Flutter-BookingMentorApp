@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../data/repositories/course_repository.dart';
 import '../models/course.dart';
@@ -8,7 +7,6 @@ import '../models/lesson.dart';
 
 class CourseProvider extends ChangeNotifier {
   final CourseRepository _repository;
-  final _uuid = const Uuid();
 
   CourseProvider({CourseRepository? repository}) : _repository = repository ?? CourseRepository();
 
@@ -39,13 +37,7 @@ class CourseProvider extends ChangeNotifier {
       _repository.getEnrollment(studentId, courseId);
 
   Future<Enrollment> enroll(String studentId, String courseId) async {
-    final enrollment = Enrollment(
-      id: _uuid.v4(),
-      studentId: studentId,
-      courseId: courseId,
-      enrolledAt: DateTime.now(),
-    );
-    await _repository.enroll(enrollment);
+    final enrollment = await _repository.enroll(courseId);
     await loadMyEnrollments(studentId);
     return enrollment;
   }
@@ -53,21 +45,9 @@ class CourseProvider extends ChangeNotifier {
   Future<Enrollment> toggleLessonComplete({
     required Enrollment enrollment,
     required String lessonId,
-    required int totalLessons,
   }) async {
-    final completed = List<String>.from(enrollment.completedLessonIds);
-    if (completed.contains(lessonId)) {
-      completed.remove(lessonId);
-    } else {
-      completed.add(lessonId);
-    }
-    final progress = totalLessons == 0 ? 0.0 : (completed.length / totalLessons) * 100;
-    final updated = enrollment.copyWith(
-      completedLessonIds: completed,
-      progressPercent: double.parse(progress.toStringAsFixed(1)),
-      certificateIssued: progress >= 100,
-    );
-    await _repository.updateProgress(updated);
+    final isCompleted = !enrollment.completedLessonIds.contains(lessonId);
+    final updated = await _repository.updateProgress(enrollment.id, lessonId: lessonId, isCompleted: isCompleted);
     await loadMyEnrollments(enrollment.studentId);
     return updated;
   }
@@ -86,7 +66,7 @@ class CourseProvider extends ChangeNotifier {
     required List<({String title, String content, int durationMinutes})> lessons,
   }) async {
     final course = Course(
-      id: _uuid.v4(),
+      id: '',
       mentorId: mentorId,
       mentorName: mentorName,
       title: title,
@@ -96,18 +76,17 @@ class CourseProvider extends ChangeNotifier {
       status: CourseStatus.pendingReview,
       createdAt: DateTime.now(),
     );
-    final lessonModels = <Lesson>[];
-    for (var i = 0; i < lessons.length; i++) {
-      final l = lessons[i];
-      lessonModels.add(Lesson(
-        id: _uuid.v4(),
-        courseId: course.id,
-        title: l.title,
-        content: l.content,
-        durationMinutes: l.durationMinutes,
-        orderIndex: i,
-      ));
-    }
+    final lessonModels = <Lesson>[
+      for (var i = 0; i < lessons.length; i++)
+        Lesson(
+          id: '',
+          courseId: course.id,
+          title: lessons[i].title,
+          content: lessons[i].content,
+          durationMinutes: lessons[i].durationMinutes,
+          orderIndex: i,
+        ),
+    ];
     await _repository.create(course, lessonModels);
   }
 

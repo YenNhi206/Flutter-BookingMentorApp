@@ -1,30 +1,30 @@
+import '../../core/api_client.dart';
 import '../../models/review.dart';
-import '../db/app_database.dart';
 
 class ReviewRepository {
+  final ApiClient _apiClient;
+
+  ReviewRepository({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+
   Future<List<Review>> getForMentor(String mentorId) async {
-    final db = await AppDatabase.instance.database;
-    final rows = await db.query(
-      'reviews',
-      where: 'mentorId = ?',
-      whereArgs: [mentorId],
-      orderBy: 'createdAt DESC',
-    );
-    return rows.map(Review.fromMap).toList();
+    final result = await _apiClient.get(
+      '/reviews',
+      query: {'targetType': 'mentor', 'targetId': mentorId},
+      auth: false,
+    ) as Map<String, dynamic>;
+    final reviews = result['reviews'] as List<dynamic>;
+    return reviews.map((r) => Review.fromJson(r as Map<String, dynamic>)).toList();
   }
 
+  /// The backend recomputes the mentor's aggregate rating itself - the
+  /// caller (`MentorProvider.submitReview`) already reloads mentors
+  /// afterward, which is enough to pick up the change.
   Future<void> create(Review review) async {
-    final db = await AppDatabase.instance.database;
-    await db.insert('reviews', review.toMap());
-
-    // Keep the mentor's aggregate rating in sync.
-    final all = await getForMentor(review.mentorId);
-    final avg = all.map((r) => r.rating).reduce((a, b) => a + b) / all.length;
-    await db.update(
-      'mentors',
-      {'rating': double.parse(avg.toStringAsFixed(2)), 'reviewCount': all.length},
-      where: 'id = ?',
-      whereArgs: [review.mentorId],
-    );
+    await _apiClient.post('/reviews', body: {
+      'targetType': 'mentor',
+      'targetId': review.mentorId,
+      'rating': review.rating,
+      'comment': review.comment,
+    });
   }
 }

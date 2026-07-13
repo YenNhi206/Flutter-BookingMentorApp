@@ -39,7 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final auth = context.read<AuthProvider>();
     final bookingProvider = context.read<BookingProvider>();
     try {
-      await bookingProvider.createBooking(
+      final booking = await bookingProvider.createBooking(
         studentId: auth.currentUser!.id,
         mentor: widget.mentor,
         sessionDate: widget.sessionDate,
@@ -51,11 +51,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Booking confirmed!'),
+          title: const Text('Booking request sent!'),
           content: Text(
             'Your session with ${widget.mentor.name} on '
             '${widget.sessionDate.day}/${widget.sessionDate.month}/${widget.sessionDate.year} '
-            'at ${widget.timeSlot} is confirmed. A notification has been sent.',
+            'at ${widget.timeSlot} is booked for ${booking.price.toStringAsFixed(0)} VND. '
+            "It's now waiting for the mentor to confirm — you'll be notified once they do.",
           ),
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),

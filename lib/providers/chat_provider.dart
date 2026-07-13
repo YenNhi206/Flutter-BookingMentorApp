@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/repositories/chat_repository.dart';
-import '../data/repositories/notification_repository.dart';
 import '../models/chat_message.dart';
-import '../models/notification_item.dart';
 import '../services/local_notification_service.dart';
 
 /// Canned mentor replies used to simulate a live conversation without a
@@ -18,12 +16,9 @@ const _mentorAutoReplies = [
 
 class ChatProvider extends ChangeNotifier {
   final ChatRepository _repository;
-  final NotificationRepository _notificationRepository;
   final _uuid = const Uuid();
 
-  ChatProvider({ChatRepository? repository, NotificationRepository? notificationRepository})
-      : _repository = repository ?? ChatRepository(),
-        _notificationRepository = notificationRepository ?? NotificationRepository();
+  ChatProvider({ChatRepository? repository}) : _repository = repository ?? ChatRepository();
 
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
@@ -62,7 +57,6 @@ class ChatProvider extends ChangeNotifier {
     if (senderId == studentId) {
       await _simulateMentorReply(
         conversationId: conversationId,
-        studentId: studentId,
         mentorId: mentorId,
         mentorName: mentorName,
       );
@@ -71,7 +65,6 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> _simulateMentorReply({
     required String conversationId,
-    required String studentId,
     required String mentorId,
     required String mentorName,
   }) async {
@@ -88,16 +81,12 @@ class ChatProvider extends ChangeNotifier {
     await _repository.sendMessage(message);
     await loadConversation(conversationId);
 
-    final notification = NotificationItem(
-      id: _uuid.v4(),
-      userId: studentId,
+    // The backend has no "create my own notification" endpoint, so this can
+    // no longer add an in-app Notifications-tab entry - the local device
+    // push is still shown so the reply doesn't go unnoticed.
+    await LocalNotificationService.instance.show(
       title: 'New message from $mentorName',
       body: reply,
-      type: NotificationType.chat,
-      relatedId: mentorId,
-      createdAt: DateTime.now(),
     );
-    await _notificationRepository.create(notification);
-    await LocalNotificationService.instance.show(title: notification.title, body: notification.body);
   }
 }

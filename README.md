@@ -99,10 +99,10 @@ available as one-tap chips on the login screen:
 | Mentor  | `mentor@demo.com`  |
 | Admin   | `admin@demo.com`   |
 
-The mentor account is linked to the "Nguyen Minh Anh" catalog profile, which
+The mentor account is linked to the "Nguyễn Minh Anh" catalog profile, which
 already has a published course and a pending-review course so the mentor
 dashboard and admin approval queue have real data to demo immediately. One
-extra mentor ("Do Anh Khoa") is seeded with `pending` approval status to
+extra mentor ("Đỗ Anh Khoa") is seeded with `pending` approval status to
 demonstrate the admin's mentor-approval flow.
 
 ## Running the app
