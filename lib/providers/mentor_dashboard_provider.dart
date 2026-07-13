@@ -55,8 +55,16 @@ class MentorDashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> confirmBooking(String bookingId) async {
+    await _bookingRepository.updateStatus(bookingId, BookingStatus.confirmed, asMentor: true);
+    if (_mentorProfile != null) {
+      _bookings = await _bookingRepository.getForMentor(_mentorProfile!.id);
+      notifyListeners();
+    }
+  }
+
   Future<void> markCompleted(String bookingId) async {
-    await _bookingRepository.updateStatus(bookingId, BookingStatus.completed);
+    await _bookingRepository.updateStatus(bookingId, BookingStatus.completed, asMentor: true);
     if (_mentorProfile != null) {
       _bookings = await _bookingRepository.getForMentor(_mentorProfile!.id);
       notifyListeners();
@@ -64,7 +72,7 @@ class MentorDashboardProvider extends ChangeNotifier {
   }
 
   Future<void> cancelBooking(String bookingId) async {
-    await _bookingRepository.updateStatus(bookingId, BookingStatus.cancelled);
+    await _bookingRepository.updateStatus(bookingId, BookingStatus.cancelled, asMentor: true);
     if (_mentorProfile != null) {
       _bookings = await _bookingRepository.getForMentor(_mentorProfile!.id);
       notifyListeners();

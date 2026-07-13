@@ -7,6 +7,19 @@ NotificationType notificationTypeFromString(String value) {
   );
 }
 
+/// Backend notification `type` values are more granular than this app's
+/// three-way split (e.g. `booking_confirmed`, `payment_success`) - anything
+/// starting with `booking`/`payment`/`course` maps to [NotificationType.booking],
+/// defensive fallback to [NotificationType.system].
+NotificationType notificationTypeFromBackend(String? value) {
+  if (value == null) return NotificationType.system;
+  if (value == 'chat') return NotificationType.chat;
+  if (value.startsWith('booking') || value.startsWith('payment') || value.startsWith('course')) {
+    return NotificationType.booking;
+  }
+  return NotificationType.system;
+}
+
 class NotificationItem {
   final String id;
   final String userId;
@@ -39,25 +52,18 @@ class NotificationItem {
         isRead: isRead ?? this.isRead,
       );
 
-  Map<String, Object?> toMap() => {
-        'id': id,
-        'userId': userId,
-        'title': title,
-        'body': body,
-        'type': type.name,
-        'relatedId': relatedId,
-        'createdAt': createdAt.toIso8601String(),
-        'isRead': isRead ? 1 : 0,
-      };
-
-  factory NotificationItem.fromMap(Map<String, Object?> map) => NotificationItem(
-        id: map['id'] as String,
-        userId: map['userId'] as String,
-        title: map['title'] as String,
-        body: map['body'] as String,
-        type: notificationTypeFromString(map['type'] as String),
-        relatedId: (map['relatedId'] as String?) ?? '',
-        createdAt: DateTime.parse(map['createdAt'] as String),
-        isRead: (map['isRead'] as int) == 1,
-      );
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    final metadata = json['metadata'] as Map<String, dynamic>? ?? const {};
+    final relatedId = metadata['bookingId'] ?? metadata['mentorId'] ?? metadata['courseId'];
+    return NotificationItem(
+      id: (json['id'] ?? json['_id']).toString(),
+      userId: (json['userId'] ?? '').toString(),
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      type: notificationTypeFromBackend(json['type'] as String?),
+      relatedId: relatedId?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      isRead: json['isRead'] as bool? ?? false,
+    );
+  }
 }

@@ -20,6 +20,9 @@ class MentorLinkApp extends StatelessWidget {
       theme: AppTheme.light,
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
+          if (auth.status == AuthStatus.unknown) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
           if (!auth.isAuthenticated) return const LoginScreen();
           switch (auth.currentUser!.role) {
             case UserRole.mentor:

@@ -35,7 +35,6 @@ class _LessonScreenState extends State<LessonScreen> {
     final updated = await context.read<CourseProvider>().toggleLessonComplete(
           enrollment: widget.enrollment,
           lessonId: widget.lesson.id,
-          totalLessons: widget.totalLessons,
         );
     if (!mounted) return;
     setState(() => _done = updated.completedLessonIds.contains(widget.lesson.id));

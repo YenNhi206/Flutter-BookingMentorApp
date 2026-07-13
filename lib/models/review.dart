@@ -17,23 +17,21 @@ class Review {
     required this.createdAt,
   });
 
-  Map<String, Object?> toMap() => {
-        'id': id,
-        'mentorId': mentorId,
-        'studentId': studentId,
-        'studentName': studentName,
-        'rating': rating,
-        'comment': comment,
-        'createdAt': createdAt.toIso8601String(),
-      };
-
-  factory Review.fromMap(Map<String, Object?> map) => Review(
-        id: map['id'] as String,
-        mentorId: map['mentorId'] as String,
-        studentId: map['studentId'] as String,
-        studentName: map['studentName'] as String,
-        rating: map['rating'] as int,
-        comment: map['comment'] as String,
-        createdAt: DateTime.parse(map['createdAt'] as String),
-      );
+  /// Backend reviews are generic (`targetType`/`targetId`, not
+  /// mentor-specific) - `targetId` only means "mentorId" when
+  /// `targetType == 'mentor'`, which is the only kind this app creates/reads.
+  factory Review.fromJson(Map<String, dynamic> json) {
+    final reviewer = json['userId'];
+    final studentId = reviewer is Map ? (reviewer['_id'] ?? '').toString() : (reviewer ?? '').toString();
+    final studentName = reviewer is Map ? (reviewer['name'] as String? ?? '') : '';
+    return Review(
+      id: (json['id'] ?? json['_id']).toString(),
+      mentorId: (json['targetId'] ?? '').toString(),
+      studentId: studentId,
+      studentName: studentName,
+      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      comment: json['comment'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
 }

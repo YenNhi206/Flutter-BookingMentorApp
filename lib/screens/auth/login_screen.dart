@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
-import '../../data/seed/seed_data.dart';
 import '../../providers/auth_provider.dart';
 import 'register_screen.dart';
 
@@ -15,8 +14,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: demoStudentEmail);
-  final _passwordController = TextEditingController(text: demoStudentPassword);
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscure = true;
 
   @override
@@ -24,13 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _fillDemo(String email) {
-    setState(() {
-      _emailController.text = email;
-      _passwordController.text = demoStudentPassword;
-    });
   }
 
   Future<void> _submit() async {
@@ -122,22 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     ),
                     child: const Text("Don't have an account? Sign up"),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Try a demo role (password auto-filled):',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.black38, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    children: [
-                      ActionChip(label: const Text('Student'), onPressed: () => _fillDemo(demoStudentEmail)),
-                      ActionChip(label: const Text('Mentor'), onPressed: () => _fillDemo(demoMentorEmail)),
-                      ActionChip(label: const Text('Admin'), onPressed: () => _fillDemo(demoAdminEmail)),
-                    ],
                   ),
                 ],
               ),

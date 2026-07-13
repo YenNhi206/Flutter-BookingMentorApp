@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../models/user_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../booking/my_bookings_screen.dart';
+import '../mentor/mentor_apply_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -67,6 +68,15 @@ class ProfileScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const MyBookingsScreen()),
                     ),
                   ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.workspace_premium_outlined),
+                    title: const Text('Become a mentor'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MentorApplyScreen()),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -75,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
           OutlinedButton.icon(
             icon: const Icon(Icons.logout),
             label: const Text('Log out'),
-            onPressed: () => auth.logout(),
+            onPressed: () async => auth.logout(),
           ),
         ],
       ),

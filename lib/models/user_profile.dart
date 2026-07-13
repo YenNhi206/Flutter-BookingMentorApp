@@ -7,11 +7,17 @@ UserRole userRoleFromString(String value) {
   );
 }
 
+/// Maps the backend's role strings (`customer`/`mentor`/`admin`) onto the
+/// app's own [UserRole] enum - the backend never uses the word "student".
+UserRole userRoleFromBackend(String? value) {
+  if (value == 'customer') return UserRole.student;
+  return userRoleFromString(value ?? '');
+}
+
 class UserProfile {
   final String id;
   final String name;
   final String email;
-  final String passwordHash;
   final UserRole role;
   final String phone;
   final String avatarUrl;
@@ -21,33 +27,20 @@ class UserProfile {
     required this.id,
     required this.name,
     required this.email,
-    required this.passwordHash,
     required this.role,
     this.phone = '',
     this.avatarUrl = '',
     this.isActive = true,
   });
 
-  Map<String, Object?> toMap() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'passwordHash': passwordHash,
-        'role': role.name,
-        'phone': phone,
-        'avatarUrl': avatarUrl,
-        'isActive': isActive ? 1 : 0,
-      };
-
-  factory UserProfile.fromMap(Map<String, Object?> map) => UserProfile(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        email: map['email'] as String,
-        passwordHash: map['passwordHash'] as String,
-        role: userRoleFromString(map['role'] as String),
-        phone: (map['phone'] as String?) ?? '',
-        avatarUrl: (map['avatarUrl'] as String?) ?? '',
-        isActive: ((map['isActive'] as int?) ?? 1) == 1,
+  factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
+        id: (json['id'] ?? json['_id']).toString(),
+        name: json['name'] as String? ?? '',
+        email: json['email'] as String? ?? '',
+        role: userRoleFromBackend(json['role'] as String?),
+        phone: json['phone'] as String? ?? '',
+        avatarUrl: json['avatar'] as String? ?? json['avatarUrl'] as String? ?? '',
+        isActive: json['isActive'] as bool? ?? true,
       );
 
   UserProfile copyWith({
@@ -60,7 +53,6 @@ class UserProfile {
       id: id,
       name: name ?? this.name,
       email: email,
-      passwordHash: passwordHash,
       role: role,
       phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
