@@ -1,60 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'app.dart';
-import 'providers/admin_provider.dart';
-import 'providers/auth_provider.dart';
-import 'providers/booking_provider.dart';
-import 'providers/chat_provider.dart';
-import 'providers/course_provider.dart';
-import 'providers/cv_analysis_provider.dart';
-import 'providers/mentor_dashboard_provider.dart';
-import 'providers/mentor_provider.dart';
-import 'providers/notification_provider.dart';
-import 'services/local_notification_service.dart';
+import 'core/theme.dart';
+import 'viewmodels/auth_vm.dart';
+import 'viewmodels/cart_vm.dart';
+import 'viewmodels/chat_vm.dart';
+import 'viewmodels/favourite_vm.dart';
+import 'viewmodels/food_vm.dart';
+import 'viewmodels/main_tab_vm.dart';
+import 'viewmodels/notification_vm.dart';
+import 'viewmodels/order_vm.dart';
+import 'views/screens/splash_screen.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await LocalNotificationService.instance.init();
-  runApp(const AppRoot());
+/// Điểm khởi động app Scoops. Đăng ký toàn bộ ViewModel (MVVM) vào
+/// [MultiProvider] ở gốc cây widget để mọi màn hình bên dưới đều truy cập
+/// được qua `context.watch`/`context.read`.
+void main() {
+  runApp(const ScoopsApp());
 }
 
-class AppRoot extends StatefulWidget {
-  /// Overridable for tests, so they don't depend on the real
-  /// `flutter_secure_storage` platform channel being available.
-  final AuthProvider? authProvider;
-
-  const AppRoot({super.key, this.authProvider});
-
-  @override
-  State<AppRoot> createState() => _AppRootState();
-}
-
-class _AppRootState extends State<AppRoot> {
-  late final AuthProvider _authProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    _authProvider = widget.authProvider ?? AuthProvider();
-    _authProvider.restoreSession();
-  }
+class ScoopsApp extends StatelessWidget {
+  const ScoopsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: _authProvider),
-        ChangeNotifierProvider(create: (_) => MentorProvider()),
-        ChangeNotifierProvider(create: (_) => BookingProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
-        ChangeNotifierProvider(create: (_) => MentorDashboardProvider()),
-        ChangeNotifierProvider(create: (_) => CourseProvider()),
-        ChangeNotifierProvider(create: (_) => CvAnalysisProvider()),
-        ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => FoodViewModel()),
+        ChangeNotifierProvider(create: (_) => CartViewModel()),
+        ChangeNotifierProvider(create: (_) => MainTabViewModel()),
+        ChangeNotifierProvider(create: (_) => FavouriteViewModel()),
+        ChangeNotifierProvider(create: (_) => OrderViewModel()),
+        ChangeNotifierProvider(create: (_) => NotificationViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
-      child: const MentorLinkApp(),
+      child: MaterialApp(
+        title: 'Scoops',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: const SplashScreen(),
+      ),
     );
   }
 }
